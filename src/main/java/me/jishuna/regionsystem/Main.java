@@ -11,7 +11,11 @@ public class Main {
 
         manager.addRegion(region);
 
-        System.out.println(manager.getRegionsForLocation(-1, 0, 0).size()); // Should have 1 region
-        System.out.println(manager.getRegionsForLocation(-2, 0, 0).size()); // Should have 0 regions
+        System.out.println(manager.getRegionsForLocation(-1, 0, 0).size()); // Should match 1 region
+        System.out.println(manager.getRegionsForLocation(-2, 0, 0).size()); // Should match 0 regions
+
+        manager.removeRegion(region);
+
+        System.out.println(manager.getRegionsForLocation(-1, 0, 0).size()); // Should match 0 regions
     }
 }

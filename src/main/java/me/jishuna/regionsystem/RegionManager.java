@@ -10,8 +10,8 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 public class RegionManager {
-    private static final List<Region> emptyList = Collections.emptyList();
-    private final Long2ObjectMap<List<Region>> regionMap = new Long2ObjectOpenHashMap<>();
+    private static final Set<Region> EMPTY_SET = Collections.emptySet();
+    private final Long2ObjectMap<Set<Region>> regionMap = new Long2ObjectOpenHashMap<>();
 
     public void addRegion(Region region) {
         int minX = region.getBounds().getMin().getBlockX() >> 4;
@@ -22,22 +22,39 @@ public class RegionManager {
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 long key = Utils.getChunkKey(x, z);
-                regionMap.computeIfAbsent(key, k -> new ArrayList<>()).add(region);
+                regionMap.computeIfAbsent(key, k -> new HashSet<>()).add(region);
             }
         }
     }
 
-    public List<Region> getRegions(Chunk chunk) {
-        return regionMap.getOrDefault(Utils.getChunkKey(chunk), emptyList);
+    public void removeRegion(Region region) {
+        int minX = region.getBounds().getMin().getBlockX() >> 4;
+        int maxX = region.getBounds().getMax().getBlockX() >> 4;
+        int minZ = region.getBounds().getMin().getBlockZ() >> 4;
+        int maxZ = region.getBounds().getMax().getBlockZ() >> 4;
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                long key = Utils.getChunkKey(x, z);
+                Set<Region> regionSet = regionMap.get(key);
+                if (regionSet != null) {
+                    regionSet.remove(region);
+                }
+            }
+        }
     }
 
-    public List<Region> getRegions(int x, int z) {
-        return regionMap.getOrDefault(Utils.getChunkKey(x, z), emptyList);
+    public Set<Region> getRegions(Chunk chunk) {
+        return regionMap.getOrDefault(Utils.getChunkKey(chunk), EMPTY_SET);
     }
 
-    public List<Region> getRegionsForLocation(Location location) {
+    public Set<Region> getRegions(int x, int z) {
+        return regionMap.getOrDefault(Utils.getChunkKey(x, z), EMPTY_SET);
+    }
+
+    public Set<Region> getRegionsForLocation(Location location) {
         Vector position = location.toVector();
-        List<Region> regions = new ArrayList<>();
+        Set<Region> regions = new HashSet<>();
 
         for (Region region : getRegions(location.getChunk())) {
             if (region.getBounds().contains(position)) {
@@ -47,11 +64,11 @@ public class RegionManager {
         return regions;
     }
 
-    public List<Region> getRegionsForLocation(double x, double y, double z) {
+    public Set<Region> getRegionsForLocation(double x, double y, double z) {
         int chunkX = NumberConversions.floor(x) >> 4;
         int chunkZ = NumberConversions.floor(z) >> 4;
 
-        List<Region> regions = new ArrayList<>();
+        Set<Region> regions = new HashSet<>();
 
         for (Region region : getRegions(chunkX, chunkZ)) {
             if (region.getBounds().contains(x, y, z)) {
